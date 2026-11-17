@@ -95,6 +95,11 @@ a{color:var(--acc)}
     <div class="m" id="dTimer"></div>
   </div>
 
+  <div class="c hid" id="cR2">
+    <div class="dev" style="cursor:default"><div style="flex:1"><b>Реле 2</b><span class="m" id="r2t"></span></div>
+    <button class="btn" id="r2b" style="width:auto;min-width:120px">…</button></div>
+  </div>
+
   <div class="c hid" id="cEvse">
     <h2>Струм заряду</h2>
     <div class="big" id="eVal">—</div>
@@ -260,6 +265,7 @@ function renderList() {
     const on = ev ? !s.on : s.on;
     let st = off ? 'Не на зв\'язку' : !d.status ? 'Отримую стан…' : ev ? (s.evse && s.evse.restarting ? 'Перезапуск EVSE…' : s.on ? 'Пауза' : 'Заряд дозволено') : (s.on ? 'Увімкнено' : 'Вимкнено');
     if (!off && m.ok && m.p > 0) st += ' · ' + (m.p / 1000).toFixed(2) + ' кВт';
+    if (!off && s.relay2) st += ' · реле 2: ' + (s.on2 ? 'увімк' : 'вимк');
     const el = document.createElement('div'); el.className = 'c dev';
     el.innerHTML = '<div class="ic ' + (off ? 'off' : on ? 'on' : '') + '">⏻</div><div><b></b><span class="m"></span></div>';
     el.querySelector('b').textContent = s.name || id; el.querySelector('.m').textContent = st;
@@ -293,6 +299,12 @@ function renderDev() {
   else { pw.textContent = s.on ? 'УВІМК' : 'ВИМК'; pw.classList.toggle('on', s.on); }
   $('dTimer').textContent = ev && e.restarting ? 'Перезапуск EVSE… ' + e.restartLeft + ' с' :
     s.timer ? (ev ? 'Заряд відновиться через ' : 'Вимкнеться через ') + fmtT(s.timer) : '';
+  // друге реле
+  $('cR2').classList.toggle('hid', !s.relay2);
+  if (s.relay2) {
+    $('r2b').textContent = s.on2 ? 'УВІМК' : 'ВИМК'; $('r2b').style.background = s.on2 ? 'var(--on)' : 'var(--off)';
+    $('r2t').textContent = s.timer2 ? 'Вимкнеться через ' + fmtT(s.timer2) : (s.on2 ? 'Увімкнено' : 'Вимкнено');
+  }
   // EVSE
   $('cEvse').classList.toggle('hid', !ev);
   if (ev) {
@@ -337,6 +349,7 @@ async function loadEnergy() {
 }
 
 $('pw').onclick = () => act('relay', { state: 'toggle' });
+$('r2b').onclick = () => act('relay2', { state: 'toggle' });
 $('eCur').oninput = () => { sliderDirty = true; $('eVal').textContent = $('eCur').value + ' А'; };
 $('eApply').onclick = () => {
   const a = $('eCur').value, s = devs[cur] && devs[cur].status, rs = (s && s.evse && s.evse.rsec) || 5;
